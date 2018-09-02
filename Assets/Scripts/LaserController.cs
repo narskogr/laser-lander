@@ -15,8 +15,10 @@ public class LaserController : MonoBehaviour
     public float laserMaxLength = 5f;
     public float laserPower = 50f;
     public Transform laserBarrelPoint;
+
     void Start()
     {
+        mainCamera = Camera.main;
         laserLineRenderer.startWidth = laserWidth;
         laserLineRenderer.endWidth = 0;
     }
@@ -35,7 +37,7 @@ public class LaserController : MonoBehaviour
         }
 
         // Start firing
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && Time.timeScale > 0)
         {
             laserFire.Play();
             laserBeam.Play();
@@ -70,50 +72,74 @@ public class LaserController : MonoBehaviour
         hit = Physics2D.Raycast(ray.origin, transform.up, length);
         Vector2 startPosition = ray.origin;
         Vector2 endPosition = ray.GetPoint(length);
+
+        // Get beam length for visuals
         float beamLength = Vector2.Distance(startPosition, endPosition);
         float beamLengthRatio = beamLength / laserMaxLength;
 
         // Add force to hit
         if (hit.collider)
         {
-            Rigidbody2D targetRigidBody = hit.transform.gameObject.GetComponent<Rigidbody2D>();
-            LanderController landerController = hit.transform.gameObject.GetComponent<LanderController>();
-            if (targetRigidBody && landerController)
-            {
-                // Recalculate variables
-                endPosition = hit.point;
-                beamLength = Vector2.Distance(startPosition, endPosition);
-                beamLengthRatio = beamLength / laserMaxLength;
+            // What are we hitting?
+            string colliderName = hit.collider.transform.name;
 
-                // Add force
-                float hitPower = laserPower * (1f - beamLengthRatio) * Time.deltaTime;
+            // Recalculate length variabls
+            endPosition = hit.point;
+            beamLength = Vector2.Distance(startPosition, endPosition);
+            beamLengthRatio = beamLength / laserMaxLength;
+
+            // Add force
+            Rigidbody2D targetRigidBody = hit.transform.gameObject.GetComponent<Rigidbody2D>();
+            if (targetRigidBody)
+            {
+
+                // Add appropriate torque if hitting wings
+                float torqueMultiplier = 0f;
+                float forceMultiplier = 0f;
+
+                switch (colliderName)
+                {
+                    case "LeftWingBottomCollider":
+                        torqueMultiplier = -1;
+                        break;
+                    case "LeftWingTopCollider":
+                        torqueMultiplier = 1;
+                        break;
+                    case "RightWingBottomCollider":
+                        torqueMultiplier = 1;
+                        break;
+                    case "RightWingTopCollider":
+                        torqueMultiplier = -1;
+                        break;
+                    case "LanderReflector":
+                        forceMultiplier = 1;
+                        break;
+                    default:
+                        forceMultiplier = -1;
+                        break;
+                }
+
                 Vector2 targetPosition = hit.transform.position;
                 Vector3 hitVector = hit.transform.InverseTransformDirection(targetPosition - hit.point);
                 hitVector.Normalize();
 
-                if (Mathf.Abs(hitVector.x) > 0.5)
-                {
-                    float torqueMultiplier = hitVector.y * -10f;
-                    targetRigidBody.AddTorque(hitVector.x * torqueMultiplier * Time.deltaTime);
-                }
-                else
-                {
-                    if (hitVector.y > 0)
-                    {
-                        targetRigidBody.AddForce(hit.transform.up * hitPower);
-                    }
-                    else
-                    {
-                        targetRigidBody.AddForce(hit.transform.up * -1f * hitPower);
-                    }
-                }
-                landerController.health -= hitPower / laserPower / 10f;
+                // Torque ignores hitpower intentionally
+                targetRigidBody.AddTorque(1 * torqueMultiplier * laserPower * Time.deltaTime);
+                targetRigidBody.AddForce(hit.transform.up * forceMultiplier * laserPower * Time.deltaTime);
 
                 // Spawn particles!
                 Transform laserHitEffect = Instantiate(hitPrefab, hit.point, Quaternion.LookRotation(hitVector, Vector3.up));
                 Destroy(laserHitEffect.gameObject, 0.12f);
             }
+
+            // Drain health
+            Health healthComponent = hit.transform.gameObject.GetComponent<Health>();
+            if (healthComponent && colliderName == "LanderBody")
+            {
+                healthComponent.TakeDamage(Time.deltaTime);
+            }
         }
+
         // Draw Line
         Debug.DrawLine(startPosition, endPosition);
         laserLineRenderer.endWidth = laserWidth * (1f - beamLengthRatio);
