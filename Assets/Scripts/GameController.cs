@@ -53,7 +53,7 @@ public class GameController : MonoBehaviour
         if (!paused && gameInProgress)
         {
             elapsedGameTime += Time.deltaTime;
-            elapsedGameTimeText.GetComponent<Text>().text = "Time:" + Mathf.RoundToInt(elapsedGameTime).ToString();
+            elapsedGameTimeText.GetComponent<Text>().text = "Time: " + Mathf.RoundToInt(elapsedGameTime).ToString();
             scoreText.GetComponent<Text>().text = "Score: " + Mathf.RoundToInt(score).ToString();
             livesText.GetComponent<Text>().text = "Lives: " + Mathf.RoundToInt(livesCurrent).ToString();
 
@@ -191,10 +191,10 @@ public class GameController : MonoBehaviour
         livesText.SetActive(true);
 
         // Fake
-        float screenLeftEdge = -50;
-        float screenRightEdge = 50;
-        float screenTopEdge = 50;
-        float screenBottomEdge = -50;
+        float screenLeftEdge = -30;
+        float screenRightEdge = 30;
+        float screenTopEdge = 20;
+        float screenBottomEdge = -10;
         // float screenWidth = Mathf.Abs(screenLeftEdge - screenRightEdge);
         float screenHeight = Mathf.Abs(screenTopEdge - screenBottomEdge);
 
@@ -305,13 +305,6 @@ public class GameController : MonoBehaviour
 
     public void Quit()
     {
-        if (Application.isEditor)
-        {
-            UnityEditor.EditorApplication.isPlaying = false;
-        }
-        else
-        {
-            Application.Quit();
-        }
+        Application.Quit();
     }
 }
