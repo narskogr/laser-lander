@@ -1,5 +1,7 @@
 # Laser Lander: A Lunar Lander Clone Without Control of the Lander
 
+[Play It!](https://narskogr.github.io/laser-lander/)
+
 Instead of directly controlling the lunar lander, you use a laser to 'shoot' the lander, which propels it upwards (or the direction it's facing). You hit the lander edge on to turn it.
 
 Ideas for Future Improvement
